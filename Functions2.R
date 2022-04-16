@@ -48,7 +48,7 @@ export_results <- function(modresults, NAMES_LIST, result_folder, rounddigit = r
   modresults <- publishFormat(modresults, rounddigit = rounddigit)
   
   saveRDS(modresults, file = file.path(result_folder, 
-                                    paste0(NAMES_LIST$cohortname, "_", NAMES_LIST$Year, "_", NAMES_LIST$VAR,"_",NAMES_LIST$modelname,"_",
+                                    paste0(NAMES_LIST$cohortname, "_", NAMES_LIST$Project, "_", NAMES_LIST$VAR,"_", NAMES_LIST$GroupTag,"_",NAMES_LIST$modelname,"_",
                                            NAMES_LIST$datatype,"_",NAMES_LIST$cells,"_", NAMES_LIST$nPC,"PC_", NAMES_LIST$tag,"_",Sys.Date(),".RDS"))) 
   message("EWAS results exported!")
   return(modresults)
@@ -130,7 +130,7 @@ sigResults <- function(results, annotcord, NAMES_LIST, psigcut = psigcut, roundd
     results = cbind(results,annotcord[match(results$CpG,annotcord$Name),])
   }
   
-  sigFileName <- paste0(NAMES_LIST$cohortname, "_", NAMES_LIST$Project, "_", NAMES_LIST$VAR,"_", NAMES_LIST$GroupTag, "_", NAMES_LIST$modelname,"_",
+  sigFileName <- paste0(NAMES_LIST$cohortname, "_", NAMES_LIST$Project, "_", NAMES_LIST$VAR,"_", NAMES_LIST$GroupTag,"_", NAMES_LIST$modelname,"_",
                         NAMES_LIST$datatype,"_", NAMES_LIST$cells,"_", NAMES_LIST$nPC,"PC_", NAMES_LIST$tag,"_",Sys.Date(),".csv")
   
   message(paste0("Writing file: ", sigFileName))
