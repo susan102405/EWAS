@@ -1,5 +1,6 @@
 ### Functions for EWAS Pipeline-2
 
+suppressWarnings(rm(rbint))
 suppressWarnings(rm(export_results))
 suppressWarnings(rm(publishFormat))
 suppressWarnings(rm(splitAutosomal))
@@ -8,8 +9,21 @@ suppressWarnings(rm(statsummary))
 
 suppressWarnings(rm(f.RLM.par))
 suppressWarnings(rm(f.LM.par))
+suppressWarnings(rm(f.LM_RES.par))
+suppressWarnings(rm(f.LM_RES_INT.par))
 suppressWarnings(rm(f.LM_CAT.par))
 suppressWarnings(rm(f.LOGISTIC.par))
+suppressWarnings(rm(f.GEE_lm.par))
+suppressWarnings(rm(f.GEE_logistic.par))
+
+## Function to perform rank-based inverse normal transform (INT) - Blom transform
+rbint <- function(u) 
+{
+    n <- length(u)
+    r <- rank(u, ties.method = "average")
+    out <- stats::qnorm((r - 0.375)/(n - 2 * k + 1))
+    return(out)
+}
 
 ## Function to export results
 export_results <- function(modresults, NAMES_LIST, result_folder, rounddigit = rounddigit){
@@ -32,7 +46,9 @@ export_results <- function(modresults, NAMES_LIST, result_folder, rounddigit = r
     rownames(modresults) <- NULL
     badTest <- which(rowSums(is.na(modresults)) == 26)
   } else {
-    colnames(modresults)[1:4] = c("Estimates","StdErr", "Stat","Pvalue")
+    colnames(modresults) = c("Estimates","StdErr", "Stat","Pvalue",
+                             "Sample_Size","beta_Min","beta_1stQuartile", "beta_Median","beta_Mean","beta_3rdQuartile","beta_Max","beta_IQR","beta_SD",
+                             "M_Min","M_1stQuartile", "M_Median","M_Mean","M_3rdQuartile","M_Max","M_IQR","M_SD")
     modresults <- data.frame(CpG = rownames(modresults), modresults)
     badTest <- which(rowSums(is.na(modresults)) == 21)
   }
@@ -48,7 +64,7 @@ export_results <- function(modresults, NAMES_LIST, result_folder, rounddigit = r
   modresults <- publishFormat(modresults, rounddigit = rounddigit)
   
   saveRDS(modresults, file = file.path(result_folder, 
-                                    paste0(NAMES_LIST$cohortname, "_", NAMES_LIST$Project, "_", NAMES_LIST$VAR,"_", NAMES_LIST$GroupTag,"_",NAMES_LIST$modelname,"_",
+                                    paste0(NAMES_LIST$cohortname, "_", NAMES_LIST$Year, "_", NAMES_LIST$VAR,"_",NAMES_LIST$modelname,"_",
                                            NAMES_LIST$datatype,"_",NAMES_LIST$cells,"_", NAMES_LIST$nPC,"PC_", NAMES_LIST$tag,"_",Sys.Date(),".RDS"))) 
   message("EWAS results exported!")
   return(modresults)
@@ -130,7 +146,7 @@ sigResults <- function(results, annotcord, NAMES_LIST, psigcut = psigcut, roundd
     results = cbind(results,annotcord[match(results$CpG,annotcord$Name),])
   }
   
-  sigFileName <- paste0(NAMES_LIST$cohortname, "_", NAMES_LIST$Project, "_", NAMES_LIST$VAR,"_", NAMES_LIST$GroupTag,"_", NAMES_LIST$modelname,"_",
+  sigFileName <- paste0(NAMES_LIST$cohortname, "_", NAMES_LIST$Year, "_", NAMES_LIST$VAR,"_", NAMES_LIST$modelname,"_",
                         NAMES_LIST$datatype,"_", NAMES_LIST$cells,"_", NAMES_LIST$nPC,"PC_", NAMES_LIST$tag,"_",Sys.Date(),".csv")
   
   message(paste0("Writing file: ", sigFileName))
@@ -152,11 +168,9 @@ statsummary <- function(bigdata, type){
     betaVal <- bigdata$methy
     Mval <- log2(betaVal/(1-betaVal))
   }
-  
+
   res = c(samplesize, min(betaVal),quantile(betaVal,0.25),median(betaVal),mean(betaVal),quantile(betaVal,0.75),max(betaVal),IQR(betaVal),sd(betaVal),
           min(Mval),quantile(Mval,0.25),median(Mval),mean(Mval),quantile(Mval,0.75),max(Mval),IQR(Mval),sd(Mval))
-  names(res) = c("Sample_Size","beta_Min","beta_1stQuartile", "beta_Median","beta_Mean","beta_3rdQuartile","beta_Max","beta_IQR","beta_SD",
-                 "M_Min","M_1stQuartile", "M_Median","M_Mean","M_3rdQuartile","M_Max","M_IQR","M_SD")
   return(res)
 }
 
@@ -195,9 +209,47 @@ f.LM.par <- function(methcol, VAR, COV, model_statement, datatype, tdatRUN) {
   invisible(b)
 }
 
+## LM_RES
+f.LM_RES.par <- function(methcol, VAR, COV, model_statement, res_model_statement, datatype, tdatRUN) { 
+  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV)))
+  mod_res <- try(lm(res_model_statement, bigdata))
+  if("try-error" %in% class(mod_res)){
+    b <- rep(NA, 21)
+  } else {
+    bigdata$methy <- residuals(mod_res)
+    mod <- try(lm(model_statement, bigdata))
+    if("try-error" %in% class(mod)){
+      b <- rep(NA, 21)
+    } else {
+      cf <- summary(mod)$coefficients
+      b <- c(cf[2,], nrow(bigdata), rep(NA, 16)) # statsummary is not applicable for residual
+    }
+  }
+  invisible(b)
+}
+    
+## LM_RES_INT
+f.LM_RES_INT.par <- function(methcol, VAR, COV, model_statement, res_model_statement, datatype, tdatRUN) { 
+  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV)))
+  mod_res <- try(lm(res_model_statement, bigdata))
+  if("try-error" %in% class(mod_res)){
+    b <- rep(NA, 21)
+  } else {
+    bigdata$methy <- rbint(residuals(mod_res))
+    mod <- try(lm(model_statement, bigdata))
+    if("try-error" %in% class(mod)){
+      b <- rep(NA, 21)
+    } else {
+      cf <- summary(mod)$coefficients
+      b <- c(cf[2,], nrow(bigdata), rep(NA, 16)) # statsummary is not applicable for residual
+    }
+  }
+  invisible(b)
+}
+                         
 ## LM_CAT
 f.LM_CAT.par <- function(methcol, VAR, nCat, COV, model_statement, datatype, tdatRUN) { 
-  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))),methy = tdatRUN[, methcol], COV)))
+  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV)))
   mod <- try(lm(model_statement, bigdata))
   if("try-error" %in% class(mod)){
     b <- rep(NA, 26)
@@ -220,7 +272,7 @@ f.LM_CAT.par <- function(methcol, VAR, nCat, COV, model_statement, datatype, tda
 
 ## LOGISTIC
 f.LOGISTIC.par <- function(methcol, VAR, COV, model_statement, datatype, tdatRUN) { 
-  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))),methy = tdatRUN[, methcol], COV)))
+  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV)))
   mod <- try(glm(model_statement, bigdata, family = binomial))
   if("try-error" %in% class(mod)){
     b <- rep(NA, 21)
@@ -232,8 +284,8 @@ f.LOGISTIC.par <- function(methcol, VAR, COV, model_statement, datatype, tdatRUN
 }
 
 ## GEE-linear
-f.GEE_lm.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN) { 
-  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))),methy = tdatRUN[, methcol], COV, ID = ID)))
+f.GEE_LM.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN) { 
+  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV, ID = ID)))
   mod <- try(geeglm(model_statement, id = ID, data = bigdata, family = gaussian, corstr="ar1"))
   if("try-error" %in% class(mod)){
     b <- rep(NA, 21)
@@ -245,8 +297,8 @@ f.GEE_lm.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatR
 }
 
 ## GEE-logistic
-f.GEE_logistic.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN) { 
-  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))),methy = tdatRUN[, methcol], COV, ID = ID)))
+f.GEE_LOGISTIC.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN) { 
+  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV, ID = ID)))
   mod <- try(geeglm(model_statement, id = ID, data = bigdata, family = binomial, corstr="ar1"))
   if("try-error" %in% class(mod)){
     b <- rep(NA, 21)
