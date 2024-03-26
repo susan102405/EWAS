@@ -313,8 +313,7 @@ f.GEE_LOGISTIC.par <- function(methcol, VAR, COV, ID, model_statement, datatype,
 
 ## LMM-linear mixed model
 f.LMM.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN) { 
-  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV, ID = ID)))
-  model_statement <- paste0(model_statement, "+ (1|ID)")  
+  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV, ID = ID)))  
   mod <- try(lmer(model_statement, data = bigdata))
   if("try-error" %in% class(mod)){
     b <- rep(NA, 21)
