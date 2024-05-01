@@ -179,17 +179,19 @@ statsummary <- function(bigdata, type){
     
   if(type == "Mval_residual")
   {
-    resid <- bigdata$methy
-    res = c(samplesize, min(resid),quantile(resid,0.25, na.rm = TRUE),median(resid),mean(resid),quantile(resid,0.75, na.rm = TRUE),max(resid),IQR(resid),sd(resid),
-           rep(NA, 8))
+    ### resid <- bigdata$methy
+    ### res = c(samplesize, min(resid),quantile(resid,0.25, na.rm = TRUE),median(resid),mean(resid),quantile(resid,0.75, na.rm = TRUE),max(resid),IQR(resid),sd(resid),
+    ###       rep(NA, 8))
+    res = c(samplesize, rep(NA, 16))
     return(res)
   }
     
   if(type == "beta_residual")
   {
-    resid <- bigdata$methy
-    res = c(samplesize, min(resid),quantile(resid,0.25, na.rm = TRUE),median(resid),mean(resid),quantile(resid,0.75, na.rm = TRUE),max(resid),IQR(resid),sd(resid),
-           rep(NA, 8))
+    ### resid <- bigdata$methy
+    ### res = c(samplesize, min(resid),quantile(resid,0.25, na.rm = TRUE),median(resid),mean(resid),quantile(resid,0.75, na.rm = TRUE),max(resid),IQR(resid),sd(resid),
+    ###       rep(NA, 8))
+    res = c(samplesize, rep(NA, 16))
     return(res)
   }      
 }
