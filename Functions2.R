@@ -163,17 +163,33 @@ statsummary <- function(bigdata, type){
   {
     Mval <- bigdata$methy
     betaVal <- 2^Mval/(2^Mval + 1)
+    res = c(samplesize, min(betaVal),quantile(betaVal,0.25, na.rm = TRUE),median(betaVal),mean(betaVal),quantile(betaVal,0.75, na.rm = TRUE),max(betaVal),IQR(betaVal),sd(betaVal),
+          min(Mval),quantile(Mval,0.25, na.rm = TRUE),median(Mval),mean(Mval),quantile(Mval,0.75, na.rm = TRUE),max(Mval),IQR(Mval),sd(Mval))
+    return(res)
   }
 
   if(type == "beta")
   {
     betaVal <- bigdata$methy
     Mval <- log2(betaVal/(1-betaVal))
-  }
-
-  res = c(samplesize, min(betaVal),quantile(betaVal,0.25, na.rm = TRUE),median(betaVal),mean(betaVal),quantile(betaVal,0.75, na.rm = TRUE),max(betaVal),IQR(betaVal),sd(betaVal),
+    res = c(samplesize, min(betaVal),quantile(betaVal,0.25, na.rm = TRUE),median(betaVal),mean(betaVal),quantile(betaVal,0.75, na.rm = TRUE),max(betaVal),IQR(betaVal),sd(betaVal),
           min(Mval),quantile(Mval,0.25, na.rm = TRUE),median(Mval),mean(Mval),quantile(Mval,0.75, na.rm = TRUE),max(Mval),IQR(Mval),sd(Mval))
-  return(res)
+    return(res)
+  }
+    
+  if(type == "Mval_residual")
+  {
+    resid <- bigdata$methy
+    res = c(samplesize, min(resid),quantile(resid,0.25, na.rm = TRUE),median(resid),mean(resid),quantile(resid,0.75, na.rm = TRUE),max(resid),IQR(resid),sd(resid))
+    return(res)
+  }
+    
+  if(type == "beta_residual")
+  {
+    resid <- bigdata$methy
+    res = c(samplesize, min(resid),quantile(resid,0.25, na.rm = TRUE),median(resid),mean(resid),quantile(resid,0.75, na.rm = TRUE),max(resid),IQR(resid),sd(resid))
+    return(res)
+  }      
 }
 
 ### Modeling functions:
