@@ -338,7 +338,8 @@ f.LMM.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN)
   if("try-error" %in% class(mod)){
     b <- rep(NA, 21)
   } else {    
-    cf <- summary(mod)$coefficients    
+    cf <- summary(mod, ddf = "Kenward-Roger")$coefficients
+    cf <- cf[, colnames(cf) != "df", drop = FALSE]
     b <- c(cf[2,], statsummary(bigdata, datatype))
   }
   invisible(b)
