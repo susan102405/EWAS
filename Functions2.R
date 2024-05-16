@@ -345,4 +345,28 @@ f.LMM.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN)
   invisible(b)
 }
 
+## LMM-linear mixed model with partitioning the variance explained
+f.LMMpartR2.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN) { 
+  # Create the data frame with the necessary columns and remove rows with NA values
+  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV, ID = ID)))  
+  # Fit the linear mixed model
+  mod <- try(lmer(model_statement, data = bigdata))
+  if("try-error" %in% class(mod)){
+    # If model fitting fails, return a vector of NAs
+    b <- rep(NA, 24)  # Adjust the length to include the R2 value, lower and upper CI
+  } else {    
+    # Get the summary coefficients and remove the df column
+    cf <- summary(mod, ddf = "Kenward-Roger")$coefficients
+    cf <- cf[, colnames(cf) != "df", drop = FALSE]
+    
+    # Compute partial R2
+    r2_result <- partR2(mod, partvars = c("methy"), R2_type = "marginal", nboot = 10)
+    
+    # Combine coefficients, stat summary, and partial R2 value
+    b <- c(cf[2,], statsummary(bigdata, datatype), r2_result$R2[2, c("estimate", "CI_lower", "CI_upper")])
+  }
+  
+  invisible(b)
+}
+                         
 message("Function2.R loaded!")
