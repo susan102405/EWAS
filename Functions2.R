@@ -331,7 +331,7 @@ f.GEE_LOGISTIC.par <- function(methcol, VAR, COV, ID, model_statement, datatype,
   invisible(b)
 }
 
-## LMM-linear mixed model using lme4
+## LMM-linear mixed model using lme4 library
 f.LMMlme4.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN) { 
   bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV, ID = ID)))  
   mod <- try(lmer(model_statement, data = bigdata))
@@ -360,9 +360,36 @@ f.LMMpartR2.par <- function(methcol, VAR, COV, ID, model_statement, datatype, td
   invisible(b)
 }
 
-
-
-
+## LMM-linear mixed model using nlme library                     
+f.LMM.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN) { 
+  
+    
+    # Create the data frame for the model
+  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), 
+                                      methy = tdatRUN[, methcol], 
+                                      COV, 
+                                      ID = ID)))  
+  
+  # Try to fit the model using lme from nlme package
+  mod <- try(lme(fixed = eval(parse(text = model_statement)), 
+                 random = ~ 1 | ID, 
+                 data = bigdata))
+  
+  if("try-error" %in% class(mod)){
+    b <- rep(NA, 21)
+  } else {    
+    # Extract the coefficients
+    cf <- summary(mod)$tTable
+    
+    # Keep the relevant coefficients, excluding the "df" column
+    cf <- cf[, colnames(cf) != "DF", drop = FALSE]
+    
+    # Combine the coefficients with other summary statistics
+    b <- c(cf[2,], statsummary(bigdata, datatype))
+  }
+  
+  invisible(b)
+}
 
 
 
