@@ -331,8 +331,8 @@ f.GEE_LOGISTIC.par <- function(methcol, VAR, COV, ID, model_statement, datatype,
   invisible(b)
 }
 
-## LMM-linear mixed model
-f.LMMlite.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN) { 
+## LMM-linear mixed model using lme4
+f.LMMlme4.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN) { 
   bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV, ID = ID)))  
   mod <- try(lmer(model_statement, data = bigdata))
   if("try-error" %in% class(mod)){
@@ -346,7 +346,7 @@ f.LMMlite.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdat
 }
 
 ## LMM-linear mixed model with partitioning the variance explained
-f.LMM.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN) {
+f.LMMpartR2.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN) {
   bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV, ID = ID)))
   mod <- try(lmer(model_statement, data = bigdata))
   if("try-error" %in% class(mod)){
@@ -359,5 +359,14 @@ f.LMM.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN)
   }
   invisible(b)
 }
+
+
+
+
+
+
+
+
+
                          
 message("Function2.R loaded!")
