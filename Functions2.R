@@ -360,6 +360,41 @@ f.LMMpartR2.par <- function(methcol, VAR, COV, ID, model_statement, datatype, td
   invisible(b)
 }
 
+## LMM-linear mixed model with disaggregating between and within-person effects and partitioning the variance explained by between and within-person effects
+win_btwn <- function(dat, var) {
+    w <- paste(var, "win", sep = "_" )
+    b <- paste(var, "btwn", sep = "_" )
+    dat[,w] <- scale(dat[,var], center = TRUE, scale = FALSE) 
+    # Note this scale = FALSE means this scales the selected column(s) by centering the data (subtracting the mean of each column) but does not scale by the standard deviation
+    dat[,b] <- rep(mean(dat[,var], na.rm = TRUE),nrow(dat))
+    return(dat)
+  }
+
+f.LMMwinbtwn.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN) {
+    bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV, ID = ID)))
+    wb_splt <- split.data.frame(bigdata,bigdata$ID)
+    wb_splt_l <- lapply(wb_splt,win_btwn, var = "methy")
+    wb_splt_comb <- do.call("rbind", wb_splt_l)
+    mod <- try(lmer(model_statement, data = wb_splt_comb))
+    if("try-error" %in% class(mod)){
+        b <- rep(NA, 14)
+    } else {
+        cf <- summary(mod, ddf = "Kenward-Roger")$coefficients
+        cf <- cf[, colnames(cf) != "df", drop = FALSE]
+        results_win <- cf[2,]
+        names(results_win) <- c("Estimates_win","StdErr_win", "Stat_win", "Pvalue_win")
+        results_btwn <- cf[3,]
+        names(results_btwn) <- c("Estimates_btwn","StdErr_btwn", "Stat_btwn", "Pvalue_btwn")
+        r2_result <- partR2(mod, partvars = c("methy_win", "methy_btwn"), R2_type = "marginal", nboot = 10)
+        r2_win <- r2_result$R2[2, c("estimate", "CI_lower", "CI_upper")]
+        names(r2_win) <- c("R2_estimate_win", "R2_CI_lower_win", "R2_CI_upper_win") 
+        r2_btwn <- r2_result$R2[3, c("estimate", "CI_lower", "CI_upper")]
+        names(r2_btwn) <- c("R2_estimate_btwn", "R2_CI_lower_btwn", "R2_CI_upper_btwn")
+        b <- c(CpG = colnames(tdatRUN)[methcol], results_win, r2_win, results_btwn, r2_btwn)  
+  }
+  invisible(b)
+}
+                         
 ## LMM-linear mixed model using nlme library                     
 f.LMM.par <- function(methcol, VAR, COV, ID, model_statement, random_effect, datatype, tdatRUN) { 
   bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV, ID = ID)))  
