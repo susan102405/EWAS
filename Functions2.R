@@ -142,7 +142,8 @@ sigResults <- function(results, annotcord, NAMES_LIST, psigcut = psigcut, roundd
   } else {
     results$p.FDR<-p.adjust(results$Pvalue,"fdr")
     if(qval) results$qvalue<-qvalue(results$Pvalue)$qvalues else results$qvalue <- NA 
-    results<-results[results$Pvalue<psigcut,]
+    # results<-results[results$Pvalue<psigcut,]
+    results<- subset(results, results$Pvalue<psigcut)
     results<-results[order(results$Pvalue),]
     # Add annotation
     results = cbind(results,annotcord[match(results$CpG,annotcord$Name),])
