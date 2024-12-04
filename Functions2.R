@@ -27,7 +27,6 @@ rbint <- function(u)
     return(out)
 }
 
-
 ## Function to export results
 export_results <- function(modresults, NAMES_LIST, result_folder, rounddigit = rounddigit){
   modresults <- data.frame(modresults)
