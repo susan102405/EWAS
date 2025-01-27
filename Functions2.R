@@ -411,5 +411,27 @@ f.LMM.par <- function(methcol, VAR, COV, ID, model_statement, random_effect, dat
   }
   invisible(b)
 }
-             
+
+# Logistic-MM-Logistic mixed-effects model using MASS and nlme package
+f.LOGISTIC-MM.par <- function(methcol, VAR, COV, ID, model_statement, random_effect, datatype, tdatRUN) { 
+  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV, ID = ID)))  
+  mod <- try(glmmPQL(
+    fixed = model_statement,   # Fixed effects formula
+    random = random_effect,    # Random effects formula
+    family = binomial(link = "logit"), # Logistic regression
+    data = bigdata,
+    verbose = FALSE            # Suppress output
+  ))
+
+  if ("try-error" %in% class(mod)) {
+    # If model fitting fails, return NA values
+    b <- rep(NA, 24)
+  } else {    
+    cf <- summary(mod)$tTable
+    cf <- cf[, colnames(cf) != "DF", drop = FALSE]
+    b <- c(cf[2, ], statsummary(bigdata, datatype)) 
+  }
+  invisible(b)
+}
+                         
 message("Function2.R loaded!")
