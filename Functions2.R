@@ -413,7 +413,7 @@ f.LMM.par <- function(methcol, VAR, COV, ID, model_statement, random_effect, dat
 }
 
 # Logistic-MM-Logistic mixed-effects model using MASS and nlme package
-f.LOGISTIC-MM.par <- function(methcol, VAR, COV, ID, model_statement, random_effect, datatype, tdatRUN) { 
+f.LOGISTIC_MM.par <- function(methcol, VAR, COV, ID, model_statement, random_effect, datatype, tdatRUN) { 
   bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV, ID = ID)))  
   mod <- try(glmmPQL(
     fixed = model_statement,   # Fixed effects formula
