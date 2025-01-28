@@ -433,5 +433,18 @@ f.LOGISTIC_MM.par <- function(methcol, VAR, COV, ID, model_statement, random_eff
   }
   invisible(b)
 }
-                         
+
+# GLMM-generalized linear mixed model using lme4 library with binary outcome using glmer
+f.GLMM.par <- function(methcol, VAR, COV, ID, model_statement, datatype, tdatRUN) { 
+  bigdata <- data.frame(na.omit(cbind(VAR = eval(parse(text = paste0("df$", VAR))), methy = tdatRUN[, methcol], COV, ID = ID)))  
+  mod <- try(glmer(model_statement, data = bigdata, family = binomial(link = "logit")))
+  if ("try-error" %in% class(mod)) {
+    b <- rep(NA, 21)
+  } else {
+    cf <- summary(mod)$coefficients
+    b <- c(cf[2,], statsummary(bigdata, datatype))
+  }
+  invisible(b)
+}
+                        
 message("Function2.R loaded!")
